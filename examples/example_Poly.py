@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.polynomial import Polynomial as P
 from lib.Polynomial import SingleMod, CyclotomicRing
 
 def poly_compose_power(a, k):
@@ -18,7 +17,6 @@ if __name__ == "__main__":
 
     a = R.random_uniform()
     b = R.random_uniform()
-
 
     print("Polaynomial1                    : ", a.tolist())
     print("Polaynomial2                    : ", b.tolist())
