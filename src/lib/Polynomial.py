@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Iterable, Protocol, runtime_checkable, cast
 import numpy as np
+import random
 import math
 import secrets
 
@@ -20,6 +21,7 @@ def _to_pyint_scalar(x):
 class ModSystem(Protocol):
     """Abstract interface for a modulus system (single q or RNS)."""
     def reduce(self, a: int) -> int: ...
+    def center_reduce(self, a: int) -> int: ...
     def add(self, a: int, b: int) -> int: ...
     def sub(self, a: int, b: int) -> int: ...
     def mul(self, a: int, b: int) -> int: ...
@@ -38,6 +40,9 @@ class SingleMod(ModSystem):
     def reduce(self, a: int) -> int:
         x = a % self.q
         return x if x >= 0 else x + self.q
+    def center_reduce(self, a: int) -> int:
+        h = self.q // 2
+        return ((a + h) % self.q) - h
     def add(self, a: int, b: int) -> int: return (a + b) % self.q
     def sub(self, a: int, b: int) -> int: return (a - b) % self.q
     def mul(self, a: int, b: int) -> int: return (a * b) % self.q
@@ -157,6 +162,12 @@ class Poly:
     def _q_like(self):
         return int(cast(SingleMod, self.mod).q)
 
+    def _center_reduce(self):
+        mod = self.mod
+        coeffs = self.coeffs
+        return np.array([mod.center_reduce(
+            _to_pyint_scalar(c)) for c in coeffs], dtype=object)
+
     def _check(self, other: "Poly"):
         if self.N != other.N or type(self.mod) != type(other.mod):
             raise TypeError("incompatible polynomials")
@@ -184,6 +195,15 @@ class CyclotomicRing:
             return RingElem(self, Poly(coeffs, self.modsys, self.N))
         else: # For RNS variant
             raise RuntimeError("Not implemented yet")
+    def sample_ternary(self) -> "RingElem":
+        if isinstance(self.modsys, SingleMod):
+            coeffs = [secrets.randbelow(3) - 1 for _ in range(self.N)]
+            return RingElem(self, Poly(coeffs, self.modsys, self.N))
+        else: # For RNS variant
+            raise RuntimeError("Not implemented yet")
+    def sample_Gaussian(self, sigma=3.2) -> "RingElem":
+            coeffs = [round(random.gauss(0, sigma)) for _ in range(self.N)]
+            return RingElem(self, Poly(coeffs, self.modsys, self.N))
 
 @dataclass
 class RingElem:

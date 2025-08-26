@@ -8,17 +8,17 @@ class Encoder:
         self.ecdMatrices, self.dcdMatrix = GenTransformMatrices(params.N)
 
     # TODO: encode with an arbitrary level
-    def encode(self, msg: np.ndarray) -> "Plaintext":
-        cycloRing = self.params.ring
+    def encode(self, msg: np.ndarray, level:int=-1) -> "Plaintext":
+        if level == -1:
+            level = self.params.max_level
+        cycloRing = self.params.rings[level]
         complex_msg = np.array([m for m in msg], dtype=np.complex128)
         rounded = Encode(complex_msg, self.ecdMatrices, self.params.N, self.params.scale)
         encoded = cycloRing.from_coeffs(rounded)
         return Plaintext(encoded, self.params.scale, self.params.max_level)
 
     def decode(self, plaintext: "Plaintext") -> np.ndarray:
-        current_level = plaintext.level
-        log_modulus = self.params.log_modulus_table[current_level]
-        decoded = Decode(plaintext, self.dcdMatrix, self.params.N, self.params.scale, log_modulus)
+        decoded = Decode(plaintext, self.dcdMatrix, self.params.N, self.params.scale)
         return decoded
 
 def GenTransformMatrices(N):
@@ -49,11 +49,8 @@ def Encode(msg:np.ndarray, ecdMatrices, N: int, scale: int):
 
     return rounded.flatten()
 
-def Decode(plaintext: "Plaintext", dcdMatrix, N:int, scale: int, log_modulus: int):
-    modulus = 1 << int(log_modulus)
-    coeffs = np.array(plaintext.ringelem.tolist(), dtype=object)
-    reduced = np.array(np.mod(coeffs, modulus), dtype=object) # hardcoded
-    centered = np.array(np.where(reduced > modulus // 2, reduced - modulus, reduced), dtype=object)
-    scaled = np.array(centered / scale, dtype=np.float64)
+def Decode(plaintext: "Plaintext", dcdMatrix, N:int, scale: int):
+    coeffs = np.array(plaintext.ringelem.poly._center_reduce(), dtype=object)
+    scaled = np.array(coeffs / scale, dtype=np.float64)
     transformed = np.array((dcdMatrix @ scaled)[:N//2].T.real, dtype=np.float64)
     return transformed
