@@ -18,9 +18,9 @@ PPML (Privacy-preserving machine learning) 등 다양한 분야에서 활용되�
 
 1. Ring $\mathcal{R}_Q$ 에서의 연산의 종류들과 정의들 ✅
 
-2. Ring $\mathcal{R}_{Q}$ 을 RNS-variant 으로 확장. ❎
+2. ~Ring $\mathcal{R}_{Q}$ 을 RNS-variant 으로 확장.~ (보류)
 
-3. $\mathcal{R}_Q$ 에서 정의되는 곱셈과 CKKS 에서 제공하는 element-wise 곱셈과의 관계 (Encoding/Decoding) ❎
+3. $\mathcal{R}_Q$ 에서 정의되는 곱셈과 CKKS 에서 제공하는 element-wise 곱셈과의 관계 (Encoding/Decoding) ✅
 
 4. CKKS 에서 노이즈를 조절하는 방법 (Rescale, Relinearization, Key switching) ❎
 
