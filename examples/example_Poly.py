@@ -12,7 +12,7 @@ def poly_compose_power(a, k):
 
 if __name__ == "__main__":
     N = 8
-    q = 64
+    q = 1 << 250 # 50 + 40 * 5
     R = CyclotomicRing.create(N, SingleMod(q))
 
     a = R.random_uniform()
@@ -35,25 +35,25 @@ if __name__ == "__main__":
     print("Polynomial2 automorphism with 5 : ", f.tolist())
 
     print("====== Numpy ======")
-    poly1 = np.array(a.tolist(), dtype=int)
-    poly2 = np.array(b.tolist(), dtype=int)
+    poly1 = np.array(a.tolist(), dtype=object)
+    poly2 = np.array(b.tolist(), dtype=object)
 
     poly_add = np.mod(poly1 + poly2, q)
 
-    divisor     = np.zeros(N+1) # (X^N+1)
+    divisor     = np.zeros(N+1)
     divisor[0]  = divisor[-1] = 1
 
-    poly_mul      = np.polymul(poly1[::-1], poly2[::-1])
-    _, remainder  = np.polydiv(poly_mul, divisor)
-    poly_mul      = np.array(np.mod(remainder[::-1], q), dtype=int)
+    poly_mul      = np.array(np.polymul(poly1[::-1], poly2[::-1]), dtype=object)
+    _, remainder  = np.array(np.polydiv(poly_mul, divisor), dtype=object)
+    poly_mul      = np.array(np.mod(remainder[::-1], q), dtype=object)
 
     poly1_composed = poly_compose_power(poly1, 3)
     poly2_composed = poly_compose_power(poly2, 5)
 
     _, remainder = np.polydiv(poly1_composed[::-1], divisor)
-    poly1_auto = np.array(np.mod(remainder[::-1], q), dtype=int)
+    poly1_auto = np.array(np.mod(remainder[::-1], q), dtype=object)
     _, remainder = np.polydiv(poly2_composed[::-1], divisor)
-    poly2_auto = np.array(np.mod(remainder[::-1], q), dtype=int)
+    poly2_auto = np.array(np.mod(remainder[::-1], q), dtype=object)
 
     print("Polynomial addition             : ", poly_add )
     print("Polynomial multiplication       : ", poly_mul)

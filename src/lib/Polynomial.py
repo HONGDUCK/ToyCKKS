@@ -5,6 +5,15 @@ import numpy as np
 import math
 import secrets
 
+# ---------- Utils ----------
+
+def _to_pyint_scalar(x):
+    if isinstance(x, np.ndarray):
+        if x.ndim != 0:
+            raise TypeError(f"Coefficient must be a scalar or 0-d array, got shape {x.shape}")
+        x = x.item()
+    return int(x)
+
 # ---------- Interfaces & primitives ----------
 
 @runtime_checkable
@@ -18,6 +27,8 @@ class ModSystem(Protocol):
     def as_int(self, a: int) -> int: ...
     def bitlen(self) -> int: ...
 
+# TODO: q를 power-of-two 사용할 것 이므로 마스킹을 이용해서
+# mod 연산 경량화
 @dataclass(frozen=True)
 class SingleMod(ModSystem):
     q: int
@@ -56,7 +67,7 @@ class Poly:
             raise ValueError(f"need {N} coeffs")
         self.mod = mod
         self.N = N
-        self.coeffs = np.array([mod.reduce(int(c)) for c in coeffs], dtype=object)
+        self.coeffs = np.array([mod.reduce(_to_pyint_scalar(c)) for c in coeffs], dtype=object)
 
     @classmethod
     def zero(cls, mod: ModSystem, N: int) -> "Poly":
@@ -162,6 +173,8 @@ class CyclotomicRing:
     def create(cls, N: int, modsys: ModSystem) -> "CyclotomicRing":
         return cls(N=N, modsys=modsys, poly=Cyclotomic2N(N))
 
+    def from_coeffs(self, coeffs: Iterable[int]) -> "RingElem":
+        return RingElem(self, Poly(coeffs, self.modsys, self.N))
     def zero(self) -> "RingElem": return RingElem(self, Poly.zero(self.modsys, self.N))
     def one(self) -> "RingElem": return RingElem(self, Poly.from_int(1, self.modsys, self.N))
     def random_uniform(self) -> "RingElem":
@@ -169,7 +182,7 @@ class CyclotomicRing:
             q = self.modsys.q
             coeffs = [secrets.randbelow(q) for _ in range(self.N)]
             return RingElem(self, Poly(coeffs, self.modsys, self.N))
-        else:
+        else: # For RNS variant
             raise RuntimeError("Not implemented yet")
 
 @dataclass
