@@ -5,6 +5,15 @@ import numpy as np
 import math
 import secrets
 
+# ---------- Utils ----------
+
+def _to_pyint_scalar(x):
+    if isinstance(x, np.ndarray):
+        if x.ndim != 0:
+            raise TypeError(f"Coefficient must be a scalar or 0-d array, got shape {x.shape}")
+        x = x.item()
+    return int(x)
+
 # ---------- Interfaces & primitives ----------
 
 @runtime_checkable
@@ -58,7 +67,7 @@ class Poly:
             raise ValueError(f"need {N} coeffs")
         self.mod = mod
         self.N = N
-        self.coeffs = np.array([mod.reduce(int(c)) for c in coeffs], dtype=object)
+        self.coeffs = np.array([mod.reduce(_to_pyint_scalar(c)) for c in coeffs], dtype=object)
 
     @classmethod
     def zero(cls, mod: ModSystem, N: int) -> "Poly":

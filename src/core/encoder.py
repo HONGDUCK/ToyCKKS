@@ -1,13 +1,11 @@
-from math import pi
 import numpy as np
 from lib.Plaintext import Plaintext
 
 class Encoder:
     def __init__(self, params):
         self.params = params
-        self.M = params.N * 2
         self.slots = params.N // 2
-        self.ecdMatrices, self.dcdMatrix = GenTransformMatrices(params.N, self.M)
+        self.ecdMatrices, self.dcdMatrix = GenTransformMatrices(params.N)
 
     # TODO: encode with an arbitrary level
     def encode(self, msg: np.ndarray) -> "Plaintext":
@@ -23,12 +21,13 @@ class Encoder:
         decoded = Decode(plaintext, self.dcdMatrix, self.params.N, self.params.scale, log_modulus)
         return decoded
 
-def GenTransformMatrices(N, M):
-    zeta = np.exp(2 * np.pi * 1j / M)
-
+def GenTransformMatrices(N):
     U = []
     for i in range(N // 2):
-        tmp = [zeta ** (j * (5 ** i)) for j in range(N)]
+        pow5_mod2N = pow(5, i, 2*N)        # 이제 모듈로는 2N (2N차 원시근이니까)
+        angles = (np.arange(N) * pow5_mod2N) % (2*N)
+        theta = np.pi * angles / N         # 2π/(2N) = π/N
+        tmp = np.exp(1j * theta)
         U.append(tmp)
 
     U   = np.array(U, dtype=complex)
@@ -48,7 +47,7 @@ def Encode(msg:np.ndarray, ecdMatrices, N: int, scale: int):
     scaled = np.array(encoded * scale, dtype=np.float64)
     rounded = np.array(np.round(scaled), dtype=int)
 
-    return rounded
+    return rounded.flatten()
 
 def Decode(plaintext: "Plaintext", dcdMatrix, N:int, scale: int, log_modulus: int):
     modulus = 1 << int(log_modulus)

@@ -11,7 +11,6 @@ def GenLogModulusTable(log_scale, max_level):
 
     return np.array(log_modulus_table, dtype=int)
 
-# q0 = 50bits 으로 가정
 # TODO: bottom_modulus 정의
 class CKKSParameters:
     def __init__(self, N: int, log_q: int, log_scale: int, sigma: float = 3.2):

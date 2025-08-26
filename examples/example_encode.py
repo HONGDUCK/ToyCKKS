@@ -2,6 +2,7 @@ import numpy as np
 from core.parameters import TOY
 from core.encoder import Encoder
 
+# N 이 크면 Overflow 발생함.
 M = 32  # 2N
 N = M // 2
 zeta = np.exp(2 * np.pi * 1j / M)
