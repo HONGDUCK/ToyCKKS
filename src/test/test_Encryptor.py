@@ -7,7 +7,7 @@ from core.parameters import CKKSParameters
 
 
 @pytest.mark.parametrize("N", [8, 16, 32, 64])
-def test_encode(N):
+def test_encrypt(N):
     for _ in range(10):
         slot_count = N//2
         msg = np.array(np.random.rand(slot_count))
