@@ -14,6 +14,7 @@ def GenCyclotomicRings(N, log_scale, max_level):
 class CKKSParameters:
     def __init__(self, N: int, log_q: int, log_scale: int, sigma: float = 3.2):
         self.N = N
+        self.slot_count = N//2
         self.q = 1 << log_q
         self.log_q = log_q
         self.scale = 1 << log_scale

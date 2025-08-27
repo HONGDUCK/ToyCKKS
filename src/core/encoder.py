@@ -1,5 +1,6 @@
 import numpy as np
 from lib.Plaintext import Plaintext
+from utils.rejections import (_check_msg_lenght)
 
 class Encoder:
     def __init__(self, params):
@@ -9,13 +10,14 @@ class Encoder:
 
     # TODO: encode with an arbitrary level
     def encode(self, msg: np.ndarray, level:int=-1) -> "Plaintext":
+        _check_msg_lenght(msg, self.params.slot_count)
         if level == -1:
             level = self.params.max_level
         cycloRing = self.params.rings[level]
         complex_msg = np.array([m for m in msg], dtype=np.complex128)
         rounded = Encode(complex_msg, self.ecdMatrices, self.params.N, self.params.scale)
         encoded = cycloRing.from_coeffs(rounded)
-        return Plaintext(encoded, self.params.scale, self.params.max_level)
+        return Plaintext(encoded, self.params.scale, level)
 
     def decode(self, plaintext: "Plaintext") -> np.ndarray:
         decoded = Decode(plaintext, self.dcdMatrix, self.params.N, self.params.scale)
