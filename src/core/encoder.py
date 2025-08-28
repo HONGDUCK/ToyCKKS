@@ -1,6 +1,6 @@
 import numpy as np
 from lib.Plaintext import Plaintext
-from utils.rejections import (_check_msg_lenght)
+from utils.rejections import (_check_msg_length)
 
 class Encoder:
     def __init__(self, params):
@@ -10,7 +10,7 @@ class Encoder:
 
     # TODO: encode with an arbitrary level
     def encode(self, msg: np.ndarray, level:int=-1) -> "Plaintext":
-        _check_msg_lenght(msg, self.params.slot_count)
+        _check_msg_length(msg, self.params.slot_count)
         if level == -1:
             level = self.params.max_level
         cycloRing = self.params.rings[level]

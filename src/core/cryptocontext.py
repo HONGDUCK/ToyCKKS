@@ -7,6 +7,8 @@ from core.operator import Operator
 from lib.Keys import SecretKey
 from lib.Ciphertext import Ciphertext
 from lib.Plaintext import Plaintext
+from utils.rejections import (_valid_scalar, _valid_array_dtype,
+                              _check_msg_length)
 
 class CryptoContext:
     def __init__(self, params: "CKKSParameters"):
@@ -37,6 +39,24 @@ class CryptoContext:
 
     def add_plain(self, ct: "Ciphertext", pt: "Plaintext"):
         return self.operator.add_plain(ct, pt)
+
+    # 우선 정수, 실수만 허용
+    def add_scalar(self, ct: "Ciphertext", scalar: np.int64|np.float64|int|float):
+        _valid_scalar(scalar)
+        slot_count = self.slot_count
+        ct_level = ct.level
+        messages = np.repeat(scalar, slot_count)
+        plaintext = self.encoder.encode(messages, ct_level)
+        return self.operator.add_plain(ct, plaintext)
+
+    # 우선 정수, 실수만 허용
+    def add_messages(self, ct: "Ciphertext", messages: np.ndarray):
+        slot_count = self.slot_count
+        _valid_array_dtype(messages)
+        _check_msg_length(messages, slot_count)
+        ct_level = ct.level
+        plaintext = self.encoder.encode(messages, ct_level)
+        return self.operator.add_plain(ct, plaintext)
 
     @property
     def slot_count(self):

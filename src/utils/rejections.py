@@ -18,6 +18,22 @@ def _is_small_level_pt(pt: "Plaintext", target_level: int):
         raise RuntimeError("Target level should be smaller then current level : Plaintext")
 
 # 메세지의 수가 slot의 수와 동일한지 체크
-def _check_msg_lenght(msg: np.ndarray, slot_count: int):
+def _check_msg_length(msg: np.ndarray, slot_count: int):
     if len(msg) != slot_count:
         raise RuntimeError("Invalied message length")
+
+# 스칼라가 정수 혹은 실수인지 확인하는 체커
+def _valid_scalar(x):
+    allowed_types = (int, float, np.integer, np.floating)
+    if not isinstance(x, allowed_types):
+        raise ValueError(f"Invalid type {type(x)}: only {allowed_types} allowed")
+    return x
+
+def _valid_array_dtype(arr: np.ndarray):
+    if np.issubdtype(arr.dtype, np.integer):
+        pass
+    elif np.issubdtype(arr.dtype, np.floating):
+        pass
+    else:
+        raise ValueError(f"Unsupported dtype {arr.dtype}, only int or float arrays are allowed")
+
