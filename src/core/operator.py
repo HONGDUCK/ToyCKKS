@@ -1,9 +1,13 @@
+from __future__ import print_function
 from lib.Ciphertext import Ciphertext
 from lib.Plaintext import Plaintext
 from core.parameters import CKKSParameters
+from lib.Polynomial import RingElem
 from utils.rejections import (_check_ciphertext_components,
+                              _check_components,
                               _is_small_level_ct,
-                              _is_small_level_pt)
+                              _is_small_level_pt,
+                              _is_level_zero)
 
 class Operator:
     def __init__(self, params: "CKKSParameters"):
@@ -61,16 +65,45 @@ class Operator:
         ct_level = ct.level
         level_downed_pt = self._level_down_pt(pt, ct_level)
         a, b = ct.components
-        poly = level_downed_pt.ringelem
-        added_b = b + poly
+        p = level_downed_pt.ringelem
+        added_b = b + p
         return Ciphertext([a, added_b], self.params.scale, ct_level)
-
-    def mul_plain(self, ct: Ciphertext, pt: Plaintext) -> Ciphertext:
-        return NotImplemented
 
     def mul(self, ct1: Ciphertext, ct2: Ciphertext) -> Ciphertext:
         return NotImplemented
 
-    def rescale(self, ct: Ciphertext) -> Ciphertext:
-        return NotImplemented
+    def mul_plain(self, ct: Ciphertext, pt: Plaintext) -> "Ciphertext":
+        _check_ciphertext_components(ct)
+        _is_level_zero(ct)
+        ct_level = ct.level
+        level_downed_pt = self._level_down_pt(pt, ct_level)
+        p = level_downed_pt.ringelem
+        a, b = ct.components
+        multiplied_a = a * p
+        multiplied_b = b * p
 
+        downed_level = ct_level - 1
+        rescaled_a, rescaled_b = self.rescale([multiplied_a, multiplied_b], downed_level)
+
+        return Ciphertext([rescaled_a, rescaled_b], self.params.scale, downed_level)
+
+    def rescale(self, components: list["RingElem"], downed_level: int) -> list["RingElem"]:
+        _check_components(components)
+        cycloRing = self.params.rings[downed_level]
+        log_scale = self.params.log_scale
+
+        a, b = components
+        coeffs_a, coeffs_b = a.poly.coeffs, b.poly.coeffs
+        for i in range(self.params.N):
+            coeffs_a[i] = div_round_power2(coeffs_a[i], log_scale)
+            coeffs_b[i] = div_round_power2(coeffs_b[i], log_scale)
+
+        new_a = cycloRing.from_coeffs(coeffs_a)
+        new_b = cycloRing.from_coeffs(coeffs_b)
+
+        return [new_a, new_b]
+
+def div_round_power2(a, shift):
+    # arr: np.ndarray of ints mod q (0..q-1)
+    # 반올림 나눗셈: floor((x + 2^(shift-1)) / 2^shift)
+    return (a + (1 << (shift-1))) >> shift

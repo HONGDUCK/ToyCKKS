@@ -1,16 +1,27 @@
 import numpy as np
 from lib.Plaintext import Plaintext
 from lib.Ciphertext import Ciphertext
+from lib.Polynomial import RingElem
 
 # 암호문의 poly 가 튜플인지 체크
 def _check_ciphertext_components(ct: "Ciphertext"):
     if len(ct.components) != 2:
         raise RuntimeError("Ciphertext components should be two.")
 
+# poly list 가 튜플인지 체크
+def _check_components(components: list["RingElem"]):
+    if len(components) != 2:
+        raise RuntimeError("Ciphertext components should be two.")
+
 # 암호문의 레벨이 타겟보다 작은지 체크
 def _is_small_level_ct(ct: "Ciphertext", target_level: int):
     if ct.level < target_level:
         raise RuntimeError("Target level should be smaller then current level : Ciphertext")
+
+# 암호문의 레벨이 0인지 체크
+def _is_level_zero(ct: "Ciphertext"):
+    if ct.level == 0:
+        raise RuntimeError("Ciphertext level is zero")
 
 # 평문의 레벨이 타겟보다 작은지 체크
 def _is_small_level_pt(pt: "Plaintext", target_level: int):
@@ -29,6 +40,7 @@ def _valid_scalar(x):
         raise ValueError(f"Invalid type {type(x)}: only {allowed_types} allowed")
     return x
 
+# 리스트가 정수 혹은 실수인지 확인하는 체커
 def _valid_array_dtype(arr: np.ndarray):
     if np.issubdtype(arr.dtype, np.integer):
         pass
