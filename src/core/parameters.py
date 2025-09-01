@@ -12,18 +12,20 @@ def GenCyclotomicRings(N, log_scale, max_level):
 
 # TODO: bottom_modulus 정의
 class CKKSParameters:
-    def __init__(self, N: int, log_q: int, log_scale: int, sigma: float = 3.2):
+    def __init__(self, N: int, log_q: int, log_scale: int, log_aux_scale: int, sigma: float = 3.2):
         self.N = N
         self.slot_count = N//2
         self.q = 1 << log_q
         self.log_q = log_q
         self.scale = 1 << log_scale
         self.log_scale = log_scale
+        self.log_aux_scale = log_aux_scale
         self.sigma = sigma
         self.max_level = (log_q - 50) // log_scale
 
         # Cyclotomic ring 초기화 
         self.rings = GenCyclotomicRings(self.N, self.log_scale, self.max_level)
+        self.auxRing = CyclotomicRing.create(N, SingleMod(1 << int(log_q + log_aux_scale)))
 
-TOY = CKKSParameters(16, 250, 40, 3.2) # max_level = 5
+TOY = CKKSParameters(16, 250, 40, 300, 3.2) # max_level = 5
 

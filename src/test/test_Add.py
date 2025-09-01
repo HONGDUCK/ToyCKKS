@@ -6,7 +6,7 @@ from core.cryptocontext import CryptoContext
 
 @pytest.mark.parametrize("N", [8, 16, 32, 64])
 def test_ciphertext_ciphertext_addition(N):
-    TESTPARAM = CKKSParameters(N, 250, 40, 3.2)
+    TESTPARAM = CKKSParameters(N, 250, 40, 300, 3.2)
     cc = CryptoContext(TESTPARAM)
     max_level = cc.max_level
     slot_count = cc.slot_count
@@ -28,7 +28,7 @@ def test_ciphertext_ciphertext_addition(N):
 
 @pytest.mark.parametrize("N", [8, 16, 32, 64])
 def test_ciphertext_scalar_addition(N):
-    TESTPARAM = CKKSParameters(N, 250, 40, 3.2)
+    TESTPARAM = CKKSParameters(N, 250, 40, 300, 3.2)
     cc = CryptoContext(TESTPARAM)
     max_level = cc.max_level
     slot_count = cc.slot_count
@@ -48,7 +48,7 @@ def test_ciphertext_scalar_addition(N):
 
 @pytest.mark.parametrize("N", [8, 16, 32, 64])
 def test_ciphertext_messages_addition(N):
-    TESTPARAM = CKKSParameters(N, 250, 40, 3.2)
+    TESTPARAM = CKKSParameters(N, 250, 40, 300, 3.2)
     cc = CryptoContext(TESTPARAM)
     max_level = cc.max_level
     slot_count = cc.slot_count

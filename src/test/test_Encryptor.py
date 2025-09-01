@@ -12,7 +12,7 @@ def test_encrypt(N):
         slot_count = N//2
         msg = np.array(np.random.rand(slot_count))
 
-        TESTPARAM = CKKSParameters(N, 250, 40, 3.2)
+        TESTPARAM = CKKSParameters(N, 250, 40, 300, 3.2)
         encoder = Encoder(TESTPARAM)
         encryptor = Encryptor(TESTPARAM)
         keyGenerator = KeyGenerator(TESTPARAM)
@@ -28,7 +28,7 @@ def test_encrypt(N):
 
 @pytest.mark.parametrize("N", [8, 16, 32, 64])
 def test_encrypt_diff_levels(N):
-    TESTPARAM = CKKSParameters(N, 250, 40, 3.2)
+    TESTPARAM = CKKSParameters(N, 250, 40, 300, 3.2)
     cc = CryptoContext(TESTPARAM)
     slot_count = cc.slot_count
     max_level = cc.max_level

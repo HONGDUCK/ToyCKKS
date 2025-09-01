@@ -4,7 +4,7 @@ from core.key_generator import KeyGenerator
 from core.encoder import Encoder
 from core.encryptor import Encryptor
 from core.operator import Operator
-from lib.Keys import SecretKey
+from lib.Keys import SecretKey, RelinearizationKey
 from lib.Ciphertext import Ciphertext
 from lib.Plaintext import Plaintext
 from utils.rejections import (_valid_scalar, _valid_array_dtype,
@@ -19,9 +19,14 @@ class CryptoContext:
         self.encryptor = Encryptor(params)
         self.operator = Operator(params)
 
+    ''' Key Gen '''
     def keygen(self):
         return self.keyGenerator.gen_secret_key()
 
+    def relinearization_keygen(self, secret_key: "SecretKey") -> "RelinearizationKey":
+        return self.keyGenerator.gen_relinearization_key(secret_key)
+
+    ''' Encrypt/Decrypt '''
     def encode(self, msg: np.ndarray, level: int = -1):
         if level == -1:
             level = self.params.max_level
@@ -63,6 +68,10 @@ class CryptoContext:
         ct_level = ct.level
         plaintext = self.encoder.encode(messages, ct_level)
         return self.operator.add_plain(ct, plaintext)
+
+    def mul(self, ct1: "Ciphertext", ct2: "Ciphertext",
+            relinearization_key: "RelinearizationKey") -> "Ciphertext":
+        return self.operator.mul(ct1, ct2, relinearization_key)
 
     def mul_plain(self, ct: "Ciphertext", pt: "Plaintext") -> "Ciphertext":
         return self.operator.mul_plain(ct, pt)

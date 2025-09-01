@@ -1,10 +1,11 @@
-from __future__ import print_function
 from lib.Ciphertext import Ciphertext
 from lib.Plaintext import Plaintext
-from core.parameters import CKKSParameters
 from lib.Polynomial import RingElem
+from lib.Keys import RelinearizationKey
+from core.parameters import CKKSParameters
 from utils.rejections import (_check_ciphertext_components,
                               _check_components,
+                              _check_triple_components,
                               _is_small_level_ct,
                               _is_small_level_pt,
                               _is_level_zero)
@@ -69,8 +70,23 @@ class Operator:
         added_b = b + p
         return Ciphertext([a, added_b], self.params.scale, ct_level)
 
-    def mul(self, ct1: Ciphertext, ct2: Ciphertext) -> Ciphertext:
-        return NotImplemented
+    def mul(self, ct1: "Ciphertext", ct2: "Ciphertext",
+            relinearization_key: "RelinearizationKey") -> "Ciphertext":
+        min_level = min(ct1.level, ct2.level)
+        level_downed_ct1 = self._level_down_ct(ct1, min_level)
+        level_downed_ct2 = self._level_down_ct(ct2, min_level)
+
+        a1, b1 = level_downed_ct1.components
+        a2, b2 = level_downed_ct2.components
+
+        aa = a1 * a2
+        abba = a1 * b2 + b1 * a2
+        bb = b1 * b2
+
+        relin_a, relin_b = self.relinearize([aa, abba, bb], relinearization_key, min_level)
+        rescaled_a, rescaled_b = self.rescale([relin_a, relin_b], min_level - 1)
+
+        return Ciphertext([rescaled_a, rescaled_b], self.params.scale, min_level-1)
 
     def mul_plain(self, ct: Ciphertext, pt: Plaintext) -> "Ciphertext":
         _check_ciphertext_components(ct)
@@ -102,6 +118,31 @@ class Operator:
         new_b = cycloRing.from_coeffs(coeffs_b)
 
         return [new_a, new_b]
+
+    def relinearize(self, components: list["RingElem"], relinearization_key: "RelinearizationKey",
+                    current_level: int) -> list["RingElem"]:
+        _check_triple_components(components)
+        auxRing = self.params.auxRing
+        cycloRing = self.params.rings[current_level]
+        log_aux_scale = self.params.log_aux_scale
+
+        aa, abba, bb = components
+        key_a, key_b = relinearization_key.key.components
+
+        tmp_aa = auxRing.from_coeffs(aa.poly.coeffs)
+
+        re_a = tmp_aa * key_a
+        re_b = tmp_aa * key_b
+
+        coeffs_a, coeffs_b =  re_a.poly.coeffs, re_b.poly.coeffs
+        for i in range(self.params.N):
+            coeffs_a[i] = div_round_power2(coeffs_a[i], log_aux_scale)
+            coeffs_b[i] = div_round_power2(coeffs_b[i], log_aux_scale)
+
+        new_a = cycloRing.from_coeffs(coeffs_a)
+        new_b = cycloRing.from_coeffs(coeffs_b)
+
+        return [abba + new_a, bb + new_b]
 
 def div_round_power2(a, shift):
     # arr: np.ndarray of ints mod q (0..q-1)

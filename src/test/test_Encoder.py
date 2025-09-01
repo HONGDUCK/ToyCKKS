@@ -36,7 +36,7 @@ def test_encode(N):
         slot_count = N//2
         msg = np.array(np.random.rand(slot_count))
 
-        TESTPARAM = CKKSParameters(N, 250, 40, 3.2)
+        TESTPARAM = CKKSParameters(N, 250, 40, 300, 3.2)
         encoder = Encoder(TESTPARAM)
 
         plaintext = encoder.encode(msg)

@@ -1,7 +1,8 @@
 import numpy as np
-from core.key_generator import SecretKey
+from lib.Keys import SecretKey, RelinearizationKey
 from lib.Ciphertext import Ciphertext
 from lib.Plaintext import Plaintext
+from lib.Polynomial import RingElem
 from utils.rejections import (_check_ciphertext_components)
 
 # encrypt, decrypt, keygen
@@ -11,7 +12,6 @@ class Encryptor:
         self.params = params
         self.slots = params.N // 2
 
-    # TODO: encode with an arbitrary level
     def encrypt(self, plaintext: "Plaintext", secret_key: "SecretKey") -> "Ciphertext":
         level = plaintext.level
         secret_key._fitting(level)
@@ -33,4 +33,12 @@ class Encryptor:
 
         return Plaintext(pt, ciphertext.scale, current_level)
 
+    def decrypt_triple(self, ciphertext: "Ciphertext", secret_key: "SecretKey") -> "Plaintext":
+        aa, abba, bb = ciphertext.components
+        current_level = ciphertext.level
+        secret_key._fitting(current_level)
+        s = secret_key.ringelem
+        pt = bb - abba * s + aa * s * s
+
+        return Plaintext(pt, ciphertext.scale, current_level)
 

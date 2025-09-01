@@ -8,7 +8,6 @@ class Encoder:
         self.slots = params.N // 2
         self.ecdMatrices, self.dcdMatrix = GenTransformMatrices(params.N)
 
-    # TODO: encode with an arbitrary level
     def encode(self, msg: np.ndarray, level:int=-1) -> "Plaintext":
         _check_msg_length(msg, self.params.slot_count)
         if level == -1:

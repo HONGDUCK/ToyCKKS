@@ -13,6 +13,11 @@ def _check_components(components: list["RingElem"]):
     if len(components) != 2:
         raise RuntimeError("Ciphertext components should be two.")
 
+# poly list 가 3개 인지 체크
+def _check_triple_components(components: list["RingElem"]):
+    if len(components) != 3:
+        raise RuntimeError("Ciphertext components should be three.")
+
 # 암호문의 레벨이 타겟보다 작은지 체크
 def _is_small_level_ct(ct: "Ciphertext", target_level: int):
     if ct.level < target_level:
