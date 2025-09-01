@@ -22,7 +22,7 @@ PPML (Privacy-preserving machine learning) 등 다양한 분야에서 활용되�
 
 3. $\mathcal{R}_Q$ 에서 정의되는 곱셈과 CKKS 에서 제공하는 element-wise 곱셈과의 관계 (Encoding/Decoding) ✅
 
-4. CKKS 에서 노이즈를 조절하는 방법 (Rescale, Relinearization, Key switching) ❎
+4. CKKS 에서 노이즈를 조절하는 방법 (Rescale, Relinearization, Key switching) ✅
 
 5. Automorphism (1 에서 학습) 과 CKKS 에서 제공하는 shift 연산과의 관계 (Rotation) ❎
 
