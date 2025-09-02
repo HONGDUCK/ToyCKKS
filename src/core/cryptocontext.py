@@ -4,7 +4,7 @@ from core.key_generator import KeyGenerator
 from core.encoder import Encoder
 from core.encryptor import Encryptor
 from core.operator import Operator
-from lib.Keys import SecretKey, RelinearizationKey
+from lib.Keys import SecretKey, RelinearizationKey, RotationKey
 from lib.Ciphertext import Ciphertext
 from lib.Plaintext import Plaintext
 from utils.rejections import (_valid_scalar, _valid_array_dtype,
@@ -26,12 +26,19 @@ class CryptoContext:
     def relinearization_keygen(self, secret_key: "SecretKey") -> "RelinearizationKey":
         return self.keyGenerator.gen_relinearization_key(secret_key)
 
+    def rotation_keygen(self, shift:int, secret_key: "SecretKey") -> "RotationKey":
+        return self.keyGenerator.gen_rotation_key(shift, secret_key)
+
     ''' Encrypt/Decrypt '''
     def encode(self, msg: np.ndarray, level: int = -1):
         if level == -1:
             level = self.params.max_level
         encoded = self.encoder.encode(msg, level)
         return encoded
+
+    def decode(self, plaintext: "Plaintext"):
+        message = self.encoder.decode(plaintext)
+        return message
 
     def encrypt(self, msg: np.ndarray, secret_key: "SecretKey", level: int = -1):
         if level == -1:
@@ -96,6 +103,10 @@ class CryptoContext:
         ct_level = ct.level
         plaintext = self.encoder.encode(messages, ct_level)
         return self.operator.mul_plain(ct, plaintext)
+
+    def rotate(self, ciphertext: "Ciphertext", rotation_key: "RotationKey") -> "Ciphertext":
+        _check_ciphertext_components(ciphertext)
+        return self.operator.rotation(ciphertext, rotation_key)
 
     @property
     def slot_count(self):

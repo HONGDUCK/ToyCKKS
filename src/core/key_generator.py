@@ -1,6 +1,6 @@
 from core.parameters import CKKSParameters
 from lib.Ciphertext import Ciphertext 
-from lib.Keys import SecretKey, RelinearizationKey
+from lib.Keys import SecretKey, RelinearizationKey, RotationKey
 
 class KeyGenerator:
     def __init__(self, params: CKKSParameters):
@@ -27,3 +27,20 @@ class KeyGenerator:
         key = Ciphertext([A, B], aux_scale, self.params.max_level)
 
         return RelinearizationKey(self.params, key) 
+
+    def gen_rotation_key(self, shift: int, secret_key: "SecretKey") -> "RotationKey":
+        aux_scale = 1 << self.params.log_aux_scale
+        auxRing = self.params.auxRing
+        s = secret_key.ringelem
+        auto_s = s.Auto(5 ** shift) # Overflow 조심
+        new_ring_s = auxRing.from_coeffs(auto_s.poly.coeffs)
+        scaled = new_ring_s.scalarmul(aux_scale)
+
+        S = auxRing.from_coeffs(s.poly._center_reduce())
+        A = auxRing.random_uniform()
+        E = auxRing.sample_Gaussian()
+
+        B = A * S - scaled + E
+        key = Ciphertext([A, B], aux_scale, self.params.max_level)
+
+        return RotationKey(self.params, key, shift)
