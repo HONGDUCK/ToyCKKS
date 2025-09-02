@@ -1,7 +1,7 @@
 from lib.Ciphertext import Ciphertext
 from lib.Plaintext import Plaintext
 from lib.Polynomial import RingElem
-from lib.Keys import RelinearizationKey
+from lib.Keys import RelinearizationKey, RotationKey
 from core.parameters import CKKSParameters
 from utils.rejections import (_check_ciphertext_components,
                               _check_components,
@@ -44,7 +44,7 @@ class Operator:
         level_downed = cycloRing.from_coeffs(coeffs)
         return Plaintext(level_downed, self.params.scale, target_level)
 
-    # --- Operations ---
+    # --- Additions ---
     def add(self, ct1: Ciphertext, ct2: Ciphertext) -> Ciphertext:
         _check_ciphertext_components(ct1)
         _check_ciphertext_components(ct2)
@@ -70,6 +70,7 @@ class Operator:
         added_b = b + p
         return Ciphertext([a, added_b], self.params.scale, ct_level)
 
+    # --- Multiplications ---
     def mul(self, ct1: "Ciphertext", ct2: "Ciphertext",
             relinearization_key: "RelinearizationKey") -> "Ciphertext":
         min_level = min(ct1.level, ct2.level)
@@ -119,6 +120,21 @@ class Operator:
 
         return [new_a, new_b]
 
+    # --- Rotation ---
+    def rotation(self, ciphertext: "Ciphertext", rotation_key: "RotationKey") -> "Ciphertext":
+        _check_ciphertext_components(ciphertext)
+        shift = rotation_key.shift
+        current_level = ciphertext.level
+
+        a,b = ciphertext.components
+        auto_a = a.Auto(5 ** shift)
+        auto_b = b.Auto(5 ** shift)
+
+        [switched_a, switched_b] = self.keyswitch([auto_a, auto_b], rotation_key, current_level)
+
+        return Ciphertext([switched_a, switched_b], self.params.scale, current_level)
+
+    # --- Key Switchings ---
     def relinearize(self, components: list["RingElem"], relinearization_key: "RelinearizationKey",
                     current_level: int) -> list["RingElem"]:
         _check_triple_components(components)
@@ -143,6 +159,31 @@ class Operator:
         new_b = cycloRing.from_coeffs(coeffs_b)
 
         return [abba + new_a, bb + new_b]
+
+    def keyswitch(self, components: list["RingElem"], rotation_key: "RotationKey",
+                  current_level: int) -> list["RingElem"]:
+        _check_components(components)
+        auxRing = self.params.auxRing
+        cycloRing = self.params.rings[current_level]
+        log_aux_scale = self.params.log_aux_scale
+
+        auto_a, auto_b = components
+        key_a, key_b = rotation_key.key.components
+
+        tmp_aa = auxRing.from_coeffs(auto_a.poly.coeffs)
+
+        switched_a = tmp_aa * key_a
+        switched_b = tmp_aa * key_b
+
+        coeffs_a, coeffs_b =  switched_a.poly.coeffs, switched_b.poly.coeffs
+        for i in range(self.params.N):
+            coeffs_a[i] = div_round_power2(coeffs_a[i], log_aux_scale)
+            coeffs_b[i] = div_round_power2(coeffs_b[i], log_aux_scale)
+
+        new_a = cycloRing.from_coeffs(coeffs_a)
+        new_b = cycloRing.from_coeffs(coeffs_b)
+
+        return [new_a, auto_b + new_b]
 
 def div_round_power2(a, shift):
     # arr: np.ndarray of ints mod q (0..q-1)
